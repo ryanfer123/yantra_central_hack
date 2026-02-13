@@ -2,10 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'theme/app_theme.dart';
+import 'models/simulation_service.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/battery_health_screen.dart';
 import 'screens/eco_drive_screen.dart';
 import 'screens/diagnostics_screen.dart';
+
+final themeNotifier = ThemeNotifier();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +24,7 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  SimulationService.instance.start();
   runApp(const EvGuardianApp());
 }
 
@@ -29,11 +33,18 @@ class EvGuardianApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'EV Guardian',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: const SplashScreen(),
+    return AnimatedBuilder(
+      animation: themeNotifier,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'EV Guardian',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeNotifier.themeMode,
+          home: const SplashScreen(),
+        );
+      },
     );
   }
 }
@@ -111,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: AppTheme.scaffoldBg(context),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -159,18 +170,18 @@ class _SplashScreenState extends State<SplashScreen>
                 position: _textSlide,
                 child: Column(
                   children: [
-                    const Text('EV Guardian',
+                    Text('EV Guardian',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.textPrimary,
+                          color: AppTheme.textPrimaryC(context),
                           letterSpacing: -1.5,
                         )),
                     const SizedBox(height: 6),
                     Text('Smart EV Battery Intelligence',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.textSecondaryC(context),
                           fontWeight: FontWeight.w400,
                           letterSpacing: 0.2,
                         )),
@@ -235,10 +246,10 @@ class _MainNavigationState extends State<MainNavigation>
         children: _screens,
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.surfaceWhite,
+        decoration: BoxDecoration(
+          color: AppTheme.navBarBg(context),
           border: Border(
-            top: BorderSide(color: AppTheme.divider, width: 1),
+            top: BorderSide(color: AppTheme.dividerC(context), width: 1),
           ),
         ),
         child: SafeArea(
@@ -253,7 +264,10 @@ class _MainNavigationState extends State<MainNavigation>
                 return _NavButton(
                   item: item,
                   isSelected: isSelected,
-                  onTap: () => setState(() => _currentIndex = index),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _currentIndex = index);
+                  },
                 );
               }),
             ),
@@ -306,11 +320,17 @@ class _NavButton extends StatelessWidget {
           children: [
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
-              child: Icon(
-                isSelected ? item.activeIcon : item.icon,
-                key: ValueKey(isSelected),
-                color: isSelected ? AppTheme.primaryBlue : AppTheme.textTertiary,
-                size: 22,
+              child: AnimatedScale(
+                scale: isSelected ? 1.15 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  isSelected ? item.activeIcon : item.icon,
+                  key: ValueKey(isSelected),
+                  color: isSelected
+                      ? AppTheme.primaryBlue
+                      : AppTheme.textTertiaryC(context),
+                  size: 22,
+                ),
               ),
             ),
             const SizedBox(height: 3),
@@ -322,7 +342,7 @@ class _NavButton extends StatelessWidget {
                 isSelected ? FontWeight.w600 : FontWeight.w400,
                 color: isSelected
                     ? AppTheme.primaryBlue
-                    : AppTheme.textTertiary,
+                    : AppTheme.textTertiaryC(context),
               ),
             ),
           ],
