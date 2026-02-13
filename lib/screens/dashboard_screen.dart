@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../models/battery_data.dart';
+import '../models/simulation_service.dart';
 import '../widgets/glass_widgets.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -10,49 +11,61 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: AppTheme.scaffoldBg(context),
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            _buildAppBar(),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const SizedBox(height: 8),
-                  _buildHeroCard(),
-                  const SizedBox(height: 16),
-                  _buildDriveModeCard(),
-                  const SizedBox(height: 16),
-                  _buildLiveTilesRow(),
-                  const SizedBox(height: 16),
-                  _buildRangeCard(),
-                  const SizedBox(height: 16),
-                  _buildQuickActions(context),
-                  const SizedBox(height: 24),
-                ]),
+        child: ValueListenableBuilder<BatteryData>(
+          valueListenable: SimulationService.instance.data,
+          builder: (context, data, _) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                SimulationService.instance.refresh();
+                await Future.delayed(const Duration(milliseconds: 400));
+              },
+              color: AppTheme.primaryBlue,
+              child: CustomScrollView(
+                slivers: [
+                  _buildAppBar(context),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        const SizedBox(height: 8),
+                        _buildHeroCard(context, data),
+                        const SizedBox(height: 16),
+                        _buildDriveModeCard(context),
+                        const SizedBox(height: 16),
+                        _buildLiveTilesRow(context, data),
+                        const SizedBox(height: 16),
+                        _buildRangeCard(context, data),
+                        const SizedBox(height: 16),
+                        _buildQuickActions(context, data),
+                        const SizedBox(height: 24),
+                      ]),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
   }
 
-  SliverAppBar _buildAppBar() {
+  SliverAppBar _buildAppBar(BuildContext context) {
     return SliverAppBar(
       pinned: false,
       floating: true,
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: AppTheme.scaffoldBg(context),
       elevation: 0,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Dashboard',
+          Text('Dashboard',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
+                color: AppTheme.textPrimaryC(context),
                 letterSpacing: -0.8,
               )),
           Text(' · Online',
@@ -68,8 +81,8 @@ class DashboardScreen extends StatelessWidget {
           icon: Stack(
             clipBehavior: Clip.none,
             children: [
-              const Icon(Icons.notifications_outlined,
-                  color: AppTheme.textPrimary, size: 24),
+              Icon(Icons.notifications_outlined,
+                  color: AppTheme.textPrimaryC(context), size: 24),
               Positioned(
                 top: -2, right: -2,
                 child: Container(
@@ -101,7 +114,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroCard() {
+  Widget _buildHeroCard(BuildContext context, BatteryData data) {
     return DarkCard(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -129,14 +142,14 @@ class DashboardScreen extends StatelessWidget {
                           letterSpacing: -0.5,
                         )),
                     const SizedBox(height: 12),
-                    _buildChargingStatus(),
+                    _buildChargingStatus(data),
                   ],
                 ),
               ),
               CircularGauge(
-                value: BatteryData.stateOfCharge,
+                value: data.stateOfCharge,
                 size: 120,
-                arcColor: BatteryData.stateOfCharge > 60
+                arcColor: data.stateOfCharge > 60
                     ? AppTheme.successGreen
                     : AppTheme.warningAmber,
               ),
@@ -150,13 +163,13 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildHeroStat('Pack Voltage', '${BatteryData.packVoltage} V',
+              _buildHeroStat('Pack Voltage', '${data.packVoltage} V',
                   Icons.bolt_rounded),
               const SizedBox(width: 12),
-              _buildHeroStat('Pack Current', '${BatteryData.packCurrent.abs()} A',
+              _buildHeroStat('Pack Current', '${data.packCurrent.abs()} A',
                   Icons.electrical_services_rounded),
               const SizedBox(width: 12),
-              _buildHeroStat('Temp', '${BatteryData.packTemp}°C',
+              _buildHeroStat('Temp', '${data.packTemp}°C',
                   Icons.thermostat_rounded),
             ],
           ),
@@ -165,10 +178,10 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChargingStatus() {
-    if (BatteryData.isCharging) {
+  Widget _buildChargingStatus(BatteryData data) {
+    if (data.isCharging) {
       return StatusPill(
-        label: 'Charging • ${BatteryData.chargeRate} kW',
+        label: 'Charging · ${data.chargeRate} kW',
         color: AppTheme.successGreen,
         icon: Icons.bolt_rounded,
       );
@@ -212,7 +225,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDriveModeCard() {
+  Widget _buildDriveModeCard(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
@@ -223,8 +236,8 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLiveTilesRow() {
-    final powerPositive = BatteryData.packPower >= 0;
+  Widget _buildLiveTilesRow(BuildContext context, BatteryData data) {
+    final powerPositive = data.packPower >= 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -235,7 +248,7 @@ class DashboardScreen extends StatelessWidget {
             Expanded(
               child: MetricTile(
                 label: 'Current Power',
-                value: BatteryData.packPower.abs().toStringAsFixed(1),
+                value: data.packPower.abs().toStringAsFixed(1),
                 unit: 'kW',
                 icon: Icons.bolt_rounded,
                 iconColor: powerPositive
@@ -250,7 +263,7 @@ class DashboardScreen extends StatelessWidget {
             Expanded(
               child: MetricTile(
                 label: 'State of Power',
-                value: BatteryData.stateOfPower,
+                value: data.stateOfPower,
                 unit: '',
                 icon: Icons.verified_rounded,
                 iconColor: AppTheme.successGreen,
@@ -265,7 +278,7 @@ class DashboardScreen extends StatelessWidget {
             Expanded(
               child: MetricTile(
                 label: 'Regen Energy',
-                value: BatteryData.regenEnergy.toStringAsFixed(1),
+                value: data.regenEnergy.toStringAsFixed(1),
                 unit: 'kWh',
                 icon: Icons.recycling_rounded,
                 iconColor: AppTheme.regenGreen,
@@ -276,7 +289,7 @@ class DashboardScreen extends StatelessWidget {
             Expanded(
               child: MetricTile(
                 label: 'Ambient Temp',
-                value: '${BatteryData.ambientTemp}',
+                value: '${data.ambientTemp}',
                 unit: '°C',
                 icon: Icons.device_thermostat_rounded,
                 iconColor: AppTheme.primaryBlue,
@@ -288,7 +301,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRangeCard() {
+  Widget _buildRangeCard(BuildContext context, BatteryData data) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -302,41 +315,40 @@ class DashboardScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${BatteryData.projectedRange.toInt()}',
-                            style: const TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary,
-                              letterSpacing: -2,
-                              height: 1,
-                            ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        AnimatedNumber(
+                          value: data.projectedRange,
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimaryC(context),
+                            letterSpacing: -2,
+                            height: 1,
                           ),
-                          const TextSpan(
-                            text: ' km',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                              color: AppTheme.textSecondary,
-                              letterSpacing: 0,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(' km',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textSecondaryC(context),
+                              )),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
-                    const Text('Based on current driving pattern',
+                    Text('Based on current driving pattern',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.textSecondary,
+                          color: AppTheme.textSecondaryC(context),
                         )),
                     const SizedBox(height: 14),
                     AppProgressBar(
-                      value: BatteryData.stateOfCharge / 100,
-                      color: BatteryData.stateOfCharge > 60
+                      value: data.stateOfCharge / 100,
+                      color: data.stateOfCharge > 60
                           ? AppTheme.successGreen
                           : AppTheme.warningAmber,
                       height: 8,
@@ -372,7 +384,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
+  Widget _buildQuickActions(BuildContext context, BatteryData data) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -388,7 +400,7 @@ class DashboardScreen extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Pre-conditioning at ${BatteryData.ambientTemp}°C ambient',
+                        'Pre-conditioning at ${data.ambientTemp}°C ambient',
                         style: const TextStyle(fontWeight: FontWeight.w500),
                       ),
                       backgroundColor: AppTheme.primaryBlue,
@@ -407,11 +419,13 @@ class DashboardScreen extends StatelessWidget {
                 icon: Icons.play_arrow_rounded,
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Trip started! Drive safely.',
+                    SnackBar(
+                      content: const Text('Trip started! Drive safely.',
                           style: TextStyle(fontWeight: FontWeight.w500)),
                       backgroundColor: AppTheme.successGreen,
                       behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   );
                 },
