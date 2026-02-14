@@ -148,14 +148,17 @@ class AdminStatTile extends StatelessWidget {
               ),
               const Spacer(),
               if (delta != null)
-                Text(delta!,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: delta!.startsWith('+')
-                          ? AdminTheme.red
-                          : AdminTheme.green,
-                      fontWeight: FontWeight.w600,
-                    )),
+                Flexible(
+                  child: Text(delta!,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: delta!.startsWith('+')
+                            ? AdminTheme.red
+                            : AdminTheme.green,
+                        fontWeight: FontWeight.w600,
+                      )),
+                ),
             ],
           ),
           const SizedBox(height: 12),

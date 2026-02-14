@@ -1,8 +1,8 @@
 // lib/screens/admin/triage_screen.dart
 import 'package:flutter/material.dart';
-import '../../../theme/admin_theme.dart';
-import '../../../models/fleet_data.dart';
-import '../../../widgets/admin_widgets.dart';
+import '../../theme/admin_theme.dart';
+import '../../models/fleet_data.dart';
+import '../../widgets/admin_widgets.dart';
 
 class TriageScreen extends StatefulWidget {
   const TriageScreen({super.key});
@@ -89,14 +89,13 @@ class _TriageScreenState extends State<TriageScreen>
               )),
           const SizedBox(height: 12),
           // Summary pills
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
               _summaryPill('${FleetData.criticalCount} Critical', AdminTheme.red),
-              const SizedBox(width: 8),
               _summaryPill('${FleetData.warningCount} Warning', AdminTheme.amber),
-              const SizedBox(width: 8),
               _summaryPill('${FleetData.healthyCount} Healthy', AdminTheme.green),
-              const SizedBox(width: 8),
               _summaryPill('${FleetData.chargingCount} Charging', AdminTheme.blue),
             ],
           ),

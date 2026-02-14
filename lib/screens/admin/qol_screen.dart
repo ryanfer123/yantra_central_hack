@@ -1,8 +1,8 @@
 // lib/screens/admin/qol_screen.dart
 import 'package:flutter/material.dart';
-import '../../../theme/admin_theme.dart';
-import '../../../models/fleet_data.dart';
-import '../../../widgets/admin_widgets.dart';
+import '../../theme/admin_theme.dart';
+import '../../models/fleet_data.dart';
+import '../../widgets/admin_widgets.dart';
 
 class QolScreen extends StatefulWidget {
   const QolScreen({super.key});
@@ -257,20 +257,19 @@ class _QolScreenState extends State<QolScreen> {
                 const Icon(Icons.nightlight_rounded,
                     color: AdminTheme.cyan, size: 16),
                 const SizedBox(width: 8),
-                const Text('Off-peak window: ',
-                    style: TextStyle(
-                      fontSize: 11, color: AdminTheme.textSecondary,
-                    )),
-                const Text('12:00 AM – 06:00 AM',
-                    style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w700,
-                      color: AdminTheme.cyan,
-                    )),
-                const Spacer(),
-                const Text('Est. saving: ₹2,840/mo',
+                const Flexible(
+                  child: Text('Off-peak: 12:00 AM – 06:00 AM',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        color: AdminTheme.cyan,
+                      )),
+                ),
+                const SizedBox(width: 6),
+                const Text('₹2,840/mo',
                     style: TextStyle(
                       fontSize: 10, color: AdminTheme.green,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     )),
               ],
             ),
@@ -394,13 +393,16 @@ class _QolScreenState extends State<QolScreen> {
                 const SizedBox(width: 8),
                 const Text('Last export: ',
                     style: TextStyle(fontSize: 11, color: AdminTheme.textMuted)),
-                const Text('Today, 9:00 AM',
-                    style: TextStyle(
-                      fontSize: 11, color: AdminTheme.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    )),
-                const Spacer(),
-                const Text('Auto-export: Monthly',
+                const Flexible(
+                  child: Text('Today, 9:00 AM',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11, color: AdminTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      )),
+                ),
+                const SizedBox(width: 8),
+                const Text('Auto: Monthly',
                     style: TextStyle(fontSize: 10, color: AdminTheme.textMuted)),
               ],
             ),

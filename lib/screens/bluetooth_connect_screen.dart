@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../services/ble_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_widgets.dart';
+import '../widgets/animations.dart';
 import 'main_navigation.dart';
 
 class BluetoothConnectScreen extends StatefulWidget {
@@ -55,12 +56,7 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
     if (!mounted) return;
     if (ble.isConnected) {
       Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const MainNavigation(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
+        ScaleFadeRoute(page: const MainNavigation()),
       );
     }
   }
@@ -230,6 +226,50 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
       );
     }
 
+    // Show shimmer skeletons while scanning
+    if (ble.scanResults.isEmpty && ble.status == BleStatus.scanning) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Text('SCANNING NEARBY...', style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.w700, letterSpacing: 1.0)),
+          ),
+          ...List.generate(3, (i) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: StaggeredEntry(
+              index: i,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceWhite,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.divider),
+                ),
+                child: Row(
+                  children: [
+                    ShimmerBox(width: 42, height: 42, borderRadius: 11),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ShimmerBox(width: 120, height: 12),
+                          const SizedBox(height: 8),
+                          ShimmerBox(width: 80, height: 10),
+                        ],
+                      ),
+                    ),
+                    ShimmerBox(width: 70, height: 32, borderRadius: 10),
+                  ],
+                ),
+              ),
+            ),
+          )),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -250,72 +290,75 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
               final isTarget = name == kDeviceName;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: AppCard(
-                  color: isTarget
-                      ? AppTheme.primaryBlue.withOpacity(0.05)
-                      : AppTheme.surfaceWhite,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 42, height: 42,
-                        decoration: BoxDecoration(
-                          color: isTarget
-                              ? AppTheme.primaryBlue.withOpacity(0.1)
-                              : AppTheme.backgroundLight,
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: Icon(
-                          isTarget
-                              ? Icons.electric_car_rounded
-                              : Icons.bluetooth_rounded,
-                          color: isTarget
-                              ? AppTheme.primaryBlue
-                              : AppTheme.textTertiary,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(name,
-                                style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.w600,
-                                  color: isTarget
-                                      ? AppTheme.primaryBlue
-                                      : AppTheme.textPrimary,
-                                )),
-                            Text('Signal: $rssi dBm',
-                                style: const TextStyle(
-                                  fontSize: 11, color: AppTheme.textSecondary,
-                                )),
-                          ],
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => _connect(result.device),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
+                child: StaggeredEntry(
+                  index: i,
+                  child: AppCard(
+                    color: isTarget
+                        ? AppTheme.primaryBlue.withOpacity(0.05)
+                        : AppTheme.surfaceWhite,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42, height: 42,
                           decoration: BoxDecoration(
                             color: isTarget
-                                ? AppTheme.primaryBlue
+                                ? AppTheme.primaryBlue.withOpacity(0.1)
                                 : AppTheme.backgroundLight,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(11),
                           ),
-                          child: Text('Connect',
-                              style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600,
-                                color: isTarget
-                                    ? Colors.white
-                                    : AppTheme.textSecondary,
-                              )),
+                          child: Icon(
+                            isTarget
+                                ? Icons.electric_car_rounded
+                                : Icons.bluetooth_rounded,
+                            color: isTarget
+                                ? AppTheme.primaryBlue
+                                : AppTheme.textTertiary,
+                            size: 20,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(name,
+                                  style: TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w600,
+                                    color: isTarget
+                                        ? AppTheme.primaryBlue
+                                        : AppTheme.textPrimary,
+                                  )),
+                              Text('Signal: $rssi dBm',
+                                  style: const TextStyle(
+                                    fontSize: 11, color: AppTheme.textSecondary,
+                                  )),
+                            ],
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => _connect(result.device),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isTarget
+                                  ? AppTheme.primaryBlue
+                                  : AppTheme.backgroundLight,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text('Connect',
+                                style: TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w600,
+                                  color: isTarget
+                                      ? Colors.white
+                                      : AppTheme.textSecondary,
+                                )),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ),  // StaggeredEntry
               );
             },
           ),
@@ -339,11 +382,7 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
         // Skip → use mock data (for demo / development)
         GestureDetector(
           onTap: () => Navigator.of(context).pushReplacement(
-            PageRouteBuilder(
-              pageBuilder: (_, __, ___) => const MainNavigation(),
-              transitionsBuilder: (_, anim, __, child) =>
-                  FadeTransition(opacity: anim, child: child),
-            ),
+            FadeRoute(page: const MainNavigation()),
           ),
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),

@@ -7,6 +7,7 @@ import 'services/ble_service.dart';
 import 'providers/vehicle_provider.dart';
 import 'screens/role_selection_screen.dart';
 import 'screens/main_navigation.dart';
+import 'widgets/animations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -104,12 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 1400));
     if (mounted) {
       Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const RoleSelectionScreen(),
-          transitionsBuilder: (_, animation, __, child) =>
-              FadeTransition(opacity: animation, child: child),
-          transitionDuration: const Duration(milliseconds: 500),
-        ),
+        FadeRoute(page: const RoleSelectionScreen()),
       );
     }
   }

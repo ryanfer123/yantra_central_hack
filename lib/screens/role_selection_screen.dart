@@ -3,65 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../theme/admin_theme.dart';
+import 'bluetooth_connect_screen.dart';
 import 'main_navigation.dart';
 import 'admin/admin_navigation.dart';
-import 'bluetooth_connect_screen.dart';
+import '../widgets/animations.dart';
 
-class RoleSelectionScreen extends StatefulWidget {
+class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
-
-  @override
-  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
-}
-
-class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
-  bool isLoading = false;
-  String loadingLabel = ""; // Shows correct message for each role
-
-  // DRIVER LOADING → GO TO BLUETOOTH FIRST
-  Future<void> _enterDriver() async {
-    setState(() {
-      isLoading = true;
-      loadingLabel = "Loading Dashboard…";
-    });
-
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const BluetoothConnectScreen(), // ← Changed
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
-        transitionDuration: const Duration(milliseconds: 400),
-      ),
-    );
-  }
-
-  // ADMIN LOADING
-  Future<void> _enterAdmin() async {
-    setState(() {
-      isLoading = true;
-      loadingLabel = "Loading Admin Panel…";
-    });
-
-    await Future.delayed(const Duration(milliseconds: 1500));
-
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-      ),
-    );
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const AdminNavigation(),
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
-        transitionDuration: const Duration(milliseconds: 400),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,124 +18,80 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Stack(
+          child: Column(
             children: [
-              // -----------------------------
-              // PAGE CONTENT
-              // -----------------------------
-              Opacity(
-                opacity: isLoading ? 0.25 : 1,
-                child: AbsorbPointer(
-                  absorbing: isLoading,
-                  child: Column(
-                    children: [
-                      const Spacer(),
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [AppTheme.primaryBlue, Color(0xFF1D4ED8)],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryBlue.withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(Icons.electric_car_rounded,
-                            color: Colors.white, size: 34),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text('EV Guardian',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -1,
-                          )),
-                      const SizedBox(height: 6),
-                      const Text('Select your access role to continue',
-                          style: TextStyle(
-                              fontSize: 13, color: AppTheme.textSecondary)),
-                      const Spacer(),
-
-                      // DRIVER CARD
-                      _RoleCard(
-                        icon: Icons.person_rounded,
-                        title: 'Driver / Owner',
-                        subtitle:
-                        'Monitor your vehicle, range, battery health and eco-drive coaching',
-                        color: AppTheme.primaryBlue,
-                        tags: const [
-                          'Dashboard',
-                          'Battery',
-                          'Eco-Drive',
-                          'Diagnostics'
-                        ],
-                        isDark: false,
-                        onTap: _enterDriver,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // ADMIN CARD
-                      _RoleCard(
-                        icon: Icons.admin_panel_settings_rounded,
-                        title: 'Fleet Admin',
-                        subtitle:
-                        'Fleet oversight, predictive maintenance, driver behavior & remote controls',
-                        color: const Color(0xFF3B82F6),
-                        tags: const [
-                          'God View',
-                          'Triage',
-                          'Maintenance',
-                          'Controls'
-                        ],
-                        isDark: true,
-                        onTap: _enterAdmin,
-                      ),
-
-                      const Spacer(),
-                      const Text('EV Guardian · Fleet Intelligence v1.0',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppTheme.textTertiary,
-                          )),
-                      const SizedBox(height: 8),
-                    ],
+              const Spacer(),
+              // Logo
+              Container(
+                width: 72, height: 72,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppTheme.primaryBlue, Color(0xFF1D4ED8)],
                   ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryBlue.withOpacity(0.3),
+                      blurRadius: 20, offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.electric_car_rounded,
+                    color: Colors.white, size: 34),
+              ),
+              const SizedBox(height: 20),
+              const Text('EV Guardian',
+                  style: TextStyle(
+                    fontSize: 28, fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary, letterSpacing: -1,
+                  )),
+              const SizedBox(height: 6),
+              const Text('Select your access role to continue',
+                  style: TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+              const Spacer(),
+
+              // User Card
+              _RoleCard(
+                icon: Icons.person_rounded,
+                title: 'Driver / Owner',
+                subtitle: 'Monitor your vehicle, range, battery health and eco-drive coaching',
+                color: AppTheme.primaryBlue,
+                tags: const ['Dashboard', 'Battery', 'Eco-Drive', 'Diagnostics'],
+                isDark: false,
+                onTap: () => Navigator.of(context).pushReplacement(
+                    SlideUpFadeRoute(page: const BluetoothConnectScreen())
                 ),
               ),
+              const SizedBox(height: 16),
 
-              // -----------------------------
-              // LOADING SPINNER OVERLAY
-              // -----------------------------
-              if (isLoading)
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(
-                        color: Color(0xFF3B82F6),
-                        strokeWidth: 3,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        loadingLabel,
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      )
-                    ],
-                  ),
-                ),
+              // Admin Card
+              _RoleCard(
+                icon: Icons.admin_panel_settings_rounded,
+                title: 'Fleet Admin',
+                subtitle: 'Fleet oversight, predictive maintenance, driver behavior & remote controls',
+                color: const Color(0xFF3B82F6),
+                tags: const ['God View', 'Triage', 'Maintenance', 'Controls'],
+                isDark: true,
+                onTap: () {
+                  SystemChrome.setSystemUIOverlayStyle(
+                    const SystemUiOverlayStyle(
+                      statusBarColor: Colors.transparent,
+                      statusBarIconBrightness: Brightness.light,
+                    ),
+                  );
+                  Navigator.of(context).pushReplacement(
+                    ScaleFadeRoute(page: const AdminNavigation()),
+                  );
+                },
+              ),
+              const Spacer(),
+              const Text('EV Guardian · Fleet Intelligence v1.0',
+                  style: TextStyle(
+                    fontSize: 11, color: AppTheme.textTertiary,
+                  )),
+              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -244,8 +148,7 @@ class _RoleCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 46,
-                  height: 46,
+                  width: 46, height: 46,
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(13),
@@ -264,8 +167,7 @@ class _RoleCard extends StatelessWidget {
                     children: [
                       Text('Enter',
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
+                            color: Colors.white, fontSize: 12,
                             fontWeight: FontWeight.w600,
                           )),
                       SizedBox(width: 4),
@@ -279,24 +181,20 @@ class _RoleCard extends StatelessWidget {
             const SizedBox(height: 14),
             Text(title,
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 18, fontWeight: FontWeight.w700,
                   letterSpacing: -0.4,
                   color: isDark ? AdminTheme.textPrimary : AppTheme.textPrimary,
                 )),
             const SizedBox(height: 5),
             Text(subtitle,
                 style: TextStyle(
-                  fontSize: 12,
-                  height: 1.4,
+                  fontSize: 12, height: 1.4,
                   color: isDark ? AdminTheme.textSecondary : AppTheme.textSecondary,
                 )),
             const SizedBox(height: 14),
             Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: tags
-                  .map((tag) => Container(
+              spacing: 6, runSpacing: 6,
+              children: tags.map((tag) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
@@ -304,12 +202,9 @@ class _RoleCard extends StatelessWidget {
                 ),
                 child: Text(tag,
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: color,
+                      fontSize: 10, fontWeight: FontWeight.w600, color: color,
                     )),
-              ))
-                  .toList(),
+              )).toList(),
             ),
           ],
         ),
