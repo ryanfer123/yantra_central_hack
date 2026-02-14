@@ -60,9 +60,10 @@ class BleService extends ChangeNotifier {
     _setStatus(BleStatus.scanning);
 
     try {
+      // Scan for ALL devices — no name filter during discovery
+      // Once ESP32 is confirmed visible, you can re-add withNames filter
       await FlutterBluePlus.startScan(
         timeout: timeout,
-        withNames: [kDeviceName], // only show EV_Guardian devices
       );
 
       _scanSub = FlutterBluePlus.scanResults.listen((results) {

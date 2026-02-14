@@ -46,7 +46,7 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
     ].request();
     if (!mounted) return;
     final ble = context.read<BleService>();
-    await ble.startScan();
+    await ble.startScan(timeout: const Duration(seconds: 15));
   }
 
   Future<void> _connect(device) async {
@@ -243,7 +243,9 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
               final result = ble.scanResults[i];
               final name = result.device.platformName.isNotEmpty
                   ? result.device.platformName
-                  : 'Unknown Device';
+                  : result.advertisementData.advName.isNotEmpty
+                  ? result.advertisementData.advName
+                  : 'Unknown (${result.device.remoteId.str.substring(0, 8)})';
               final rssi = result.rssi;
               final isTarget = name == kDeviceName;
               return Padding(
