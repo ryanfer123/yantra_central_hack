@@ -4,12 +4,15 @@ import 'package:fl_chart/fl_chart.dart';
 import '../theme/app_theme.dart';
 import '../models/battery_data.dart';
 import '../widgets/glass_widgets.dart';
+import 'package:provider/provider.dart';
+import '../providers/vehicle_provider.dart';
 
 class EcoDriveScreen extends StatelessWidget {
   const EcoDriveScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    context.watch<VehicleProvider>(); // rebuild on every BLE packet
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(

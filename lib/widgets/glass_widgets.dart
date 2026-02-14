@@ -1,6 +1,7 @@
 // lib/widgets/glass_widgets.dart
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 
 // ── Premium Card ─────────────────────────────────────────────────────────────
@@ -20,14 +21,15 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppTheme.isDarkMode(context);
     return Container(
       decoration: BoxDecoration(
-        color: color ?? AppTheme.surfaceWhite,
+        color: color ?? AppTheme.cardColor(context),
         borderRadius: BorderRadius.circular(borderRadius ?? 20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+            blurRadius: isDark ? 8 : 16,
             offset: const Offset(0, 4),
           ),
         ],
@@ -71,6 +73,37 @@ class DarkCard extends StatelessWidget {
   }
 }
 
+// ── Animated Number Display ──────────────────────────────────────────────────
+class AnimatedNumber extends StatelessWidget {
+  final double value;
+  final int decimals;
+  final TextStyle style;
+  final String suffix;
+
+  const AnimatedNumber({
+    super.key,
+    required this.value,
+    this.decimals = 0,
+    required this.style,
+    this.suffix = '',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: value),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutCubic,
+      builder: (context, animValue, _) {
+        final text = decimals > 0
+            ? animValue.toStringAsFixed(decimals)
+            : animValue.toInt().toString();
+        return Text('$text$suffix', style: style);
+      },
+    );
+  }
+}
+
 // ── Circular SoC Gauge ───────────────────────────────────────────────────────
 class CircularGauge extends StatefulWidget {
   final double value;         // 0–100
@@ -108,6 +141,20 @@ class _CircularGaugeState extends State<CircularGauge>
   }
 
   @override
+  void didUpdateWidget(CircularGauge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      _animation = Tween<double>(
+        begin: _animation.value,
+        end: widget.value / 100,
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+      _controller
+        ..reset()
+        ..forward();
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -137,15 +184,19 @@ class _CircularGaugeState extends State<CircularGauge>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  '${widget.value.toInt()}%',
+                AnimatedNumber(
+                  value: widget.value,
                   style: TextStyle(
                     fontSize: widget.size * 0.22,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
+
+                    // CHANGE MADE HERE ✔
+                    color: Colors.white,
+
                     letterSpacing: -1.5,
                     height: 1,
                   ),
+                  suffix: '%',
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -153,7 +204,7 @@ class _CircularGaugeState extends State<CircularGauge>
                   style: TextStyle(
                     fontSize: widget.size * 0.08,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryC(context),
                   ),
                 ),
               ],
@@ -247,17 +298,17 @@ class SectionHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textSecondary,
+                      color: AppTheme.textSecondaryC(context),
                       letterSpacing: 0.6,
                     )),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(subtitle!,
-                      style: const TextStyle(
-                        fontSize: 11, color: AppTheme.textTertiary,
+                      style: TextStyle(
+                        fontSize: 11, color: AppTheme.textTertiaryC(context),
                       )),
                 ],
               ],
@@ -345,7 +396,8 @@ class MetricTile extends StatelessWidget {
                   color: (iconColor ?? AppTheme.primaryBlue).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: iconColor ?? AppTheme.primaryBlue, size: 16),
+                child:
+                Icon(icon, color: iconColor ?? AppTheme.primaryBlue, size: 16),
               ),
               const Spacer(),
             ],
@@ -359,17 +411,17 @@ class MetricTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: valueColor ?? AppTheme.textPrimary,
+                    color: valueColor ?? AppTheme.textPrimaryC(context),
                     letterSpacing: -1,
                     height: 1,
                   ),
                 ),
                 TextSpan(
                   text: ' $unit',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppTheme.textSecondary,
+                    color: AppTheme.textSecondaryC(context),
                     letterSpacing: 0,
                   ),
                 ),
@@ -378,9 +430,9 @@ class MetricTile extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: AppTheme.textTertiary,
+                color: AppTheme.textTertiaryC(context),
                 fontWeight: FontWeight.w500,
               )),
         ],
@@ -406,17 +458,23 @@ class SafetyIndicator extends StatelessWidget {
 
   Color get _color {
     switch (status) {
-      case SafetyStatus.safe: return AppTheme.successGreen;
-      case SafetyStatus.warning: return AppTheme.warningAmber;
-      case SafetyStatus.danger: return AppTheme.dangerRed;
+      case SafetyStatus.safe:
+        return AppTheme.successGreen;
+      case SafetyStatus.warning:
+        return AppTheme.warningAmber;
+      case SafetyStatus.danger:
+        return AppTheme.dangerRed;
     }
   }
 
   String get _statusLabel {
     switch (status) {
-      case SafetyStatus.safe: return 'SAFE';
-      case SafetyStatus.warning: return 'WARN';
-      case SafetyStatus.danger: return 'ALERT';
+      case SafetyStatus.safe:
+        return 'SAFE';
+      case SafetyStatus.warning:
+        return 'WARN';
+      case SafetyStatus.danger:
+        return 'ALERT';
     }
   }
 
@@ -442,15 +500,16 @@ class SafetyIndicator extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
+                      color: AppTheme.textPrimaryC(context),
                     )),
                 const SizedBox(height: 2),
                 Text(value,
-                    style: const TextStyle(
-                      fontSize: 12, color: AppTheme.textSecondary,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondaryC(context),
                     )),
               ],
             ),
@@ -500,13 +559,18 @@ class _DriveModeSelectorState extends State<DriveModeSelector> {
         children: _modes.map((mode) {
           final isSelected = mode == _selected;
           return GestureDetector(
-            onTap: () => setState(() => _selected = mode),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _selected = mode);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.textPrimary : Colors.transparent,
+                color: isSelected
+                    ? AppTheme.textPrimaryC(context)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -515,7 +579,11 @@ class _DriveModeSelectorState extends State<DriveModeSelector> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : AppTheme.textTertiary,
+                    color: isSelected
+                        ? (AppTheme.isDarkMode(context)
+                        ? Colors.black
+                        : Colors.white)
+                        : AppTheme.textTertiaryC(context),
                   ),
                 ),
               ),
@@ -546,11 +614,15 @@ class AppActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color ?? (isPrimary ? AppTheme.primaryBlue : AppTheme.surfaceWhite);
-    final fg = isPrimary ? Colors.white : AppTheme.textPrimary;
+    final bg =
+        color ?? (isPrimary ? AppTheme.primaryBlue : AppTheme.cardColor(context));
+    final fg = isPrimary ? Colors.white : AppTheme.textPrimaryC(context);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
@@ -574,19 +646,15 @@ class AppActionButton extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: fg, size: 18),
             const SizedBox(width: 8),
-            Flexible(
-              child: Text(label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: fg,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  )),
-            ),
+            Text(label,
+                style: TextStyle(
+                  color: fg,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                )),
           ],
         ),
       ),
@@ -632,7 +700,8 @@ class _SparklinePainter extends CustomPainter {
     final points = <Offset>[];
     for (int i = 0; i < data.length; i++) {
       final x = i / (data.length - 1) * size.width;
-      final y = size.height - ((data[i] - minVal) / range * (size.height - 8) + 4);
+      final y =
+          size.height - ((data[i] - minVal) / range * (size.height - 8) + 4);
       points.add(Offset(x, y));
     }
 
@@ -698,7 +767,7 @@ class AppProgressBar extends StatelessWidget {
         return Container(
           height: height,
           decoration: BoxDecoration(
-            color: trackColor ?? AppTheme.divider,
+            color: trackColor ?? AppTheme.dividerC(context),
             borderRadius: BorderRadius.circular(height / 2),
           ),
           child: Align(

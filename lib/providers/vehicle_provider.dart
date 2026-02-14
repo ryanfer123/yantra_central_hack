@@ -31,6 +31,7 @@ class VehicleProvider extends ChangeNotifier {
   StreamSubscription? _sub;
 
   VehicleProvider(this._ble) {
+    // 🔥 Subscribes to BLE live JSON packet stream
     _sub = _ble.dataStream.listen(_onPacket);
   }
 
@@ -64,7 +65,7 @@ class VehicleProvider extends ChangeNotifier {
   double packTemp = 28.5;
   // ── [#16] Thermal Gradient ────────────────────────────────────────────────
   double thermalGradient = 2.1;
-  // ── [#17] Inverter Temperature ────────────────────────────────────────────
+  // ── [#17] Inverter Temperature ─────────────────────────────────────────────
   double inverterTemp = 41.2;
   // ── [#18] Ambient Temperature ─────────────────────────────────────────────
   double ambientTemp = 22.0;
@@ -110,6 +111,8 @@ class VehicleProvider extends ChangeNotifier {
 
   // ── Parse incoming JSON from BLE ──────────────────────────────────────────
   void _onPacket(Map<String, dynamic> d) {
+    debugPrint('🔥 _onPacket fired! soc=${d['soc']}');
+
     packVoltage          = _d(d, 'v',   packVoltage);
     packCurrent          = _d(d, 'i',   packCurrent);
     packPower            = _d(d, 'p',   packPower);
@@ -139,27 +142,28 @@ class VehicleProvider extends ChangeNotifier {
     timeToFull           = _d(d, 'ttf', timeToFull);
     speed                = _d(d, 'spd', speed);
 
-    // ── TinyML SAF model override ───────────────────────────────────────────
+    // TinyML SAF override
     final safClass = d['saf'];
     if (safClass != null) {
       gasCoLevel = safClass == 2 ? 1.2 : safClass == 1 ? 0.3 : 0.02;
-      insulationResistance = safClass == 2 ? 20.0 : safClass == 1 ? 80.0 : 485.0;
+      insulationResistance =
+      safClass == 2 ? 20.0 : safClass == 1 ? 80.0 : 485.0;
     }
 
-    // Decode SoP (0=Ready, 1=Limited, 2=Fault)
+    // Decode SoP
     final sopCode = d['sop'];
     if (sopCode != null) {
       stateOfPower = sopCode == 0 ? 'Ready' : sopCode == 1 ? 'Limited' : 'Fault';
     }
 
-    // Append to rolling history
+    // Rolling history
     _push(resistanceHistory, internalResistance);
     _push(packTempHistory,   packTemp);
     _push(stressHistory,     batteryStressIndex);
 
     lastUpdated = DateTime.now();
 
-    // ── Sync static BatteryData used by UI widgets ──────────────────────────
+    // Sync to static BatteryData for UI
     BatteryData.packVoltage          = packVoltage;
     BatteryData.packCurrent          = packCurrent;
     BatteryData.packPower            = packPower;

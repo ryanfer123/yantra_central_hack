@@ -1,5 +1,7 @@
 // lib/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';                     // ✅ added
+import '../providers/vehicle_provider.dart';                 // ✅ added
 import '../theme/app_theme.dart';
 import '../models/battery_data.dart';
 import '../widgets/glass_widgets.dart';
@@ -10,6 +12,8 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<VehicleProvider>();                       // ✅ added
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
@@ -251,8 +255,6 @@ class DashboardScreen extends StatelessWidget {
       ),
     );
   }
-
-  /// 🚗 DRIVE MODE REMOVED → This function was deleted
 
   Widget _buildLiveTilesRow() {
     final powerPositive = BatteryData.packPower >= 0;

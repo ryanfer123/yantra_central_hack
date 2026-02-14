@@ -19,6 +19,7 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulse;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -29,17 +30,22 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
     )..repeat(reverse: true);
     _pulse = Tween<double>(begin: 0.85, end: 1.0)
         .animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+
+    _searchController.addListener(() {
+      if (mounted) setState(() {});
+    });
+
     _requestPermissionsAndScan();
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _requestPermissionsAndScan() async {
-    // Android 12+ needs BLUETOOTH_SCAN + BLUETOOTH_CONNECT
     await [
       Permission.bluetoothScan,
       Permission.bluetoothConnect,
@@ -67,25 +73,65 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
       builder: (context, ble, _) {
         return Scaffold(
           backgroundColor: AppTheme.backgroundLight,
+          resizeToAvoidBottomInset: true,
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              // ← reduced horizontal only, removed top/bottom padding from here
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),    // was 24
                   _buildHeader(ble),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 12),    // was 32
                   _buildStatusCard(ble),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),     // was 16
+                  _buildSearchBar(),
+                  const SizedBox(height: 8),     // was 16
                   Expanded(child: _buildDeviceList(ble)),
                   _buildBottomActions(ble),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),     // was 16
                 ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceWhite,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.divider),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        style: const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+        decoration: InputDecoration(
+          icon: Icon(Icons.search_rounded, color: AppTheme.textTertiary, size: 20),
+          hintText: 'Search by name or ID...',
+          hintStyle: const TextStyle(color: AppTheme.textTertiary),
+          border: InputBorder.none,
+          isDense: true,                         // ← smaller height
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+            icon: Icon(Icons.close_rounded, color: AppTheme.textTertiary, size: 18),
+            onPressed: () => _searchController.clear(),
+          )
+              : null,
+        ),
+      ),
     );
   }
 
@@ -97,7 +143,7 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
           builder: (_, __) => Transform.scale(
             scale: ble.status == BleStatus.scanning ? _pulse.value : 1.0,
             child: Container(
-              width: 80, height: 80,
+              width: 72, height: 72,             // was 80x80
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -126,26 +172,26 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
                     ? Icons.bluetooth_connected_rounded
                     : Icons.bluetooth_searching_rounded,
                 color: Colors.white,
-                size: 36,
+                size: 32,                        // was 36
               ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),             // was 16
         const Text('Connect to EV_Guardian',
             style: TextStyle(
-              fontSize: 22, fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary, letterSpacing: -0.6,
+              fontSize: 20,                      // was 22
+              fontWeight: FontWeight.w700,
+              color: AppTheme.textPrimary,
+              letterSpacing: -0.6,
             )),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),              // was 6
         Text(
           ble.isConnected
               ? 'Connected — live data streaming'
               : 'Make sure your ESP32 is powered on and within range',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 13, color: AppTheme.textSecondary,
-          ),
+          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
         ),
       ],
     );
@@ -158,46 +204,62 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
 
     switch (ble.status) {
       case BleStatus.scanning:
-        color = AppTheme.primaryBlue; label = 'Scanning for EV_Guardian...'; icon = Icons.radar_rounded;
+        color = AppTheme.primaryBlue;
+        label = 'Scanning for EV_Guardian...';
+        icon = Icons.radar_rounded;
         break;
       case BleStatus.connecting:
-        color = AppTheme.warningAmber; label = 'Connecting...'; icon = Icons.sync_rounded;
+        color = AppTheme.warningAmber;
+        label = 'Connecting...';
+        icon = Icons.sync_rounded;
         break;
       case BleStatus.connected:
-        color = AppTheme.successGreen; label = 'Connected · Live data active'; icon = Icons.check_circle_rounded;
+        color = AppTheme.successGreen;
+        label = 'Connected · Live data active';
+        icon = Icons.check_circle_rounded;
         break;
       case BleStatus.error:
-        color = AppTheme.dangerRed; label = ble.errorMessage; icon = Icons.error_rounded;
+        color = AppTheme.dangerRed;
+        label = ble.errorMessage;
+        icon = Icons.error_rounded;
         break;
       case BleStatus.disconnected:
-        color = AppTheme.dangerRed; label = 'Disconnected'; icon = Icons.bluetooth_disabled_rounded;
+        color = AppTheme.dangerRed;
+        label = 'Disconnected';
+        icon = Icons.bluetooth_disabled_rounded;
         break;
       default:
-        color = AppTheme.textSecondary; label = 'Idle'; icon = Icons.bluetooth_rounded;
+        color = AppTheme.textSecondary;
+        label = 'Idle';
+        icon = Icons.bluetooth_rounded;
     }
 
     return AppCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),        // was 16
       child: Row(
         children: [
           Container(
-            width: 40, height: 40,
+            width: 36, height: 36,              // was 40x40
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(label,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
                 style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w500, color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: color,
                 )),
           ),
           if (ble.status == BleStatus.scanning)
             SizedBox(
-              width: 16, height: 16,
+              width: 14, height: 14,
               child: CircularProgressIndicator(
                 strokeWidth: 2, color: AppTheme.primaryBlue,
               ),
@@ -208,39 +270,64 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
   }
 
   Widget _buildDeviceList(BleService ble) {
-    if (ble.scanResults.isEmpty && ble.status != BleStatus.scanning) {
+    final filterText = _searchController.text.toLowerCase();
+    final filteredResults = ble.scanResults.where((r) {
+      final name = r.device.platformName.isNotEmpty
+          ? r.device.platformName
+          : r.advertisementData.advName;
+      final id = r.device.remoteId.str;
+      return name.toLowerCase().contains(filterText) ||
+          id.toLowerCase().contains(filterText);
+    }).toList();
+
+    if (filteredResults.isEmpty && ble.status != BleStatus.scanning) {
+      final isSearching = _searchController.text.isNotEmpty;
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.bluetooth_disabled_rounded,
-                color: AppTheme.textTertiary, size: 48),
-            const SizedBox(height: 12),
-            const Text('No devices found',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
-            const SizedBox(height: 6),
-            const Text('Make sure EV_Guardian is advertising',
-                style: TextStyle(color: AppTheme.textTertiary, fontSize: 12)),
+                color: AppTheme.textTertiary, size: 44),
+            const SizedBox(height: 10),
+            Text(isSearching ? 'No matching devices' : 'No devices found',
+                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+            const SizedBox(height: 4),
+            Text(
+              isSearching
+                  ? 'Try a different search term'
+                  : 'Make sure EV_Guardian is advertising',
+              style: const TextStyle(color: AppTheme.textTertiary, fontSize: 12),
+            ),
           ],
         ),
       );
     }
 
-    // Show shimmer skeletons while scanning
-    if (ble.scanResults.isEmpty && ble.status == BleStatus.scanning) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    if (filteredResults.isEmpty && ble.status == BleStatus.scanning) {
+      if (_searchController.text.isNotEmpty) {
+        return Center(
+          child: Text('Scanning for "$filterText"...',
+              style: const TextStyle(color: AppTheme.textTertiary, fontSize: 12)),
+        );
+      }
+      return ListView(
         children: [
           const Padding(
-            padding: EdgeInsets.only(bottom: 12),
-            child: Text('SCANNING NEARBY...', style: TextStyle(fontSize: 10, color: AppTheme.textTertiary, fontWeight: FontWeight.w700, letterSpacing: 1.0)),
+            padding: EdgeInsets.only(bottom: 10),
+            child: Text('SCANNING NEARBY...',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppTheme.textTertiary,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                )),
           ),
           ...List.generate(3, (i) => Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: StaggeredEntry(
               index: i,
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceWhite,
                   borderRadius: BorderRadius.circular(16),
@@ -273,14 +360,14 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (ble.scanResults.isNotEmpty)
+        if (filteredResults.isNotEmpty)
           const SectionHeader(title: 'FOUND DEVICES'),
         const SizedBox(height: 8),
         Expanded(
           child: ListView.builder(
-            itemCount: ble.scanResults.length,
+            itemCount: filteredResults.length,
             itemBuilder: (_, i) {
-              final result = ble.scanResults[i];
+              final result = filteredResults[i];
               final name = result.device.platformName.isNotEmpty
                   ? result.device.platformName
                   : result.advertisementData.advName.isNotEmpty
@@ -322,15 +409,18 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(name,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                     color: isTarget
                                         ? AppTheme.primaryBlue
                                         : AppTheme.textPrimary,
                                   )),
                               Text('Signal: $rssi dBm',
                                   style: const TextStyle(
-                                    fontSize: 11, color: AppTheme.textSecondary,
+                                    fontSize: 11,
+                                    color: AppTheme.textSecondary,
                                   )),
                             ],
                           ),
@@ -348,7 +438,8 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
                             ),
                             child: Text('Connect',
                                 style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                   color: isTarget
                                       ? Colors.white
                                       : AppTheme.textSecondary,
@@ -358,7 +449,7 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
                       ],
                     ),
                   ),
-                ),  // StaggeredEntry
+                ),
               );
             },
           ),
@@ -369,26 +460,25 @@ class _BluetoothConnectScreenState extends State<BluetoothConnectScreen>
 
   Widget _buildBottomActions(BleService ble) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (ble.status != BleStatus.scanning)
           AppActionButton(
             label: 'Scan Again',
             icon: Icons.refresh_rounded,
-            onTap: () {
-              context.read<BleService>().startScan();
-            },
+            onTap: () => context.read<BleService>().startScan(),
           ),
-        const SizedBox(height: 10),
-        // Skip → use mock data (for demo / development)
+        const SizedBox(height: 8),
         GestureDetector(
           onTap: () => Navigator.of(context).pushReplacement(
             FadeRoute(page: const MainNavigation()),
           ),
           child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: 6),
             child: Text('Skip — use demo data',
                 style: TextStyle(
-                  fontSize: 12, color: AppTheme.textTertiary,
+                  fontSize: 12,
+                  color: AppTheme.textTertiary,
                   decoration: TextDecoration.underline,
                 )),
           ),

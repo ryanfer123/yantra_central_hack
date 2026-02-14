@@ -1,6 +1,9 @@
 // lib/screens/diagnostics_screen.dart
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';               // ← ADDED
+import '../providers/vehicle_provider.dart';            // ← ADDED
+
 import '../theme/app_theme.dart';
 import '../models/battery_data.dart';
 import '../widgets/glass_widgets.dart';
@@ -10,6 +13,8 @@ class DiagnosticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<VehicleProvider>();                  // ← ADDED (FIRST LINE)
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
@@ -266,7 +271,6 @@ class DiagnosticsScreen extends StatelessWidget {
   }
 
   Widget _buildThermalComparisonChart() {
-    // Simulated pack temp vs ambient temp over time
     final packTempData = BatteryData.packTempHistory;
     final ambientTempData = List.generate(
         packTempData.length, (i) => BatteryData.ambientTemp + (i * 0.1));
@@ -289,14 +293,16 @@ class DiagnosticsScreen extends StatelessWidget {
               const SizedBox(width: 4),
               const Text('Pack Temp',
                   style: TextStyle(
-                    fontSize: 11, color: AppTheme.textSecondary,
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
                   )),
               const SizedBox(width: 12),
               _buildLegendDot(AppTheme.warningAmber),
               const SizedBox(width: 4),
               const Text('Ambient',
                   style: TextStyle(
-                    fontSize: 11, color: AppTheme.textSecondary,
+                    fontSize: 11,
+                    color: AppTheme.textSecondary,
                   )),
             ],
           ),
@@ -318,14 +324,18 @@ class DiagnosticsScreen extends StatelessWidget {
                       reservedSize: 30,
                       getTitlesWidget: (value, _) => Text('${value.toInt()}°',
                           style: const TextStyle(
-                            fontSize: 9, color: AppTheme.textTertiary,
+                            fontSize: 9,
+                            color: AppTheme.textTertiary,
                           )),
                       interval: 4,
                     ),
                   ),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
@@ -367,9 +377,11 @@ class DiagnosticsScreen extends StatelessWidget {
 
   Widget _buildLegendDot(Color color) {
     return Container(
-      width: 10, height: 10,
+      width: 10,
+      height: 10,
       decoration: BoxDecoration(
-        color: color, shape: BoxShape.circle,
+        color: color,
+        shape: BoxShape.circle,
       ),
     );
   }
