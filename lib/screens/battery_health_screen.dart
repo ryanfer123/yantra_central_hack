@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../theme/app_theme.dart';
 import '../models/battery_data.dart';
-import '../models/simulation_service.dart';
 import '../widgets/glass_widgets.dart';
 
 class BatteryHealthScreen extends StatelessWidget {
@@ -12,69 +11,57 @@ class BatteryHealthScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBg(context),
+      backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
-        child: ValueListenableBuilder<BatteryData>(
-          valueListenable: SimulationService.instance.data,
-          builder: (context, data, _) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                SimulationService.instance.refresh();
-                await Future.delayed(const Duration(milliseconds: 400));
-              },
-              color: AppTheme.primaryBlue,
-              child: CustomScrollView(
-                slivers: [
-                  _buildAppBar(context),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        const SizedBox(height: 8),
-                        _buildHealthScoreCard(context, data),
-                        const SizedBox(height: 16),
-                        _buildInternalResistanceCard(context, data),
-                        const SizedBox(height: 16),
-                        _buildCoulombicEfficiencyCard(context, data),
-                        const SizedBox(height: 16),
-                        _buildLifespanSection(context, data),
-                        const SizedBox(height: 16),
-                        _buildDodHistogramCard(context, data),
-                        const SizedBox(height: 16),
-                        _buildCellBalanceCard(context, data),
-                        const SizedBox(height: 24),
-                      ]),
-                    ),
-                  ),
-                ],
+        child: CustomScrollView(
+          slivers: [
+            _buildAppBar(),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const SizedBox(height: 8),
+                  _buildHealthScoreCard(),
+                  const SizedBox(height: 16),
+                  _buildInternalResistanceCard(),
+                  const SizedBox(height: 16),
+                  _buildCoulombicEfficiencyCard(),
+                  const SizedBox(height: 16),
+                  _buildLifespanSection(),
+                  const SizedBox(height: 16),
+                  _buildDodHistogramCard(),
+                  const SizedBox(height: 16),
+                  _buildCellBalanceCard(context),
+                  const SizedBox(height: 24),
+                ]),
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  SliverAppBar _buildAppBar(BuildContext context) {
+  SliverAppBar _buildAppBar() {
     return SliverAppBar(
       pinned: false,
       floating: true,
-      backgroundColor: AppTheme.scaffoldBg(context),
+      backgroundColor: AppTheme.backgroundLight,
       elevation: 0,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: const [
           Text('My Battery',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimaryC(context),
+                color: AppTheme.textPrimary,
                 letterSpacing: -0.8,
               )),
           Text('Health & Long-term Value',
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.textSecondaryC(context),
+                color: AppTheme.textSecondary,
                 fontWeight: FontWeight.w400,
               )),
         ],
@@ -82,8 +69,9 @@ class BatteryHealthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHealthScoreCard(BuildContext context, BatteryData data) {
-    final score = ((100 - (data.internalResistance - 35) * 2)
+  Widget _buildHealthScoreCard() {
+    // Composite health score
+    final score = ((100 - (BatteryData.internalResistance - 35) * 2)
         .clamp(0, 100)
         .toInt());
 
@@ -106,16 +94,14 @@ class BatteryHealthScreen extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    AnimatedNumber(
-                      value: score.toDouble(),
-                      style: const TextStyle(
-                        fontSize: 64,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: -3,
-                        height: 1,
-                      ),
-                    ),
+                    Text('$score',
+                        style: const TextStyle(
+                          fontSize: 64,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -3,
+                          height: 1,
+                        )),
                     const Padding(
                       padding: EdgeInsets.only(bottom: 10, left: 4),
                       child: Text('/100',
@@ -129,10 +115,10 @@ class BatteryHealthScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  score > 85 ? 'Excellent — Like New' : score > 70 ? 'Good — Normal Aging' : 'Degraded — Service Advised',
-                  style: TextStyle(
+                  score > 85 ? '🟢 Excellent — Like New' : score > 70 ? '🟡 Good — Normal Aging' : '🔴 Degraded — Service Advised',
+                  style: const TextStyle(
                     fontSize: 13,
-                    color: score > 85 ? AppTheme.successGreen : score > 70 ? AppTheme.warningAmber : AppTheme.dangerRed,
+                    color: Colors.white70,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -165,7 +151,7 @@ class BatteryHealthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInternalResistanceCard(BuildContext context, BatteryData data) {
+  Widget _buildInternalResistanceCard() {
     return AppCard(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -187,16 +173,16 @@ class BatteryHealthScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Internal Resistance',
+                    const Text('Internal Resistance',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimaryC(context),
+                          color: AppTheme.textPrimary,
                         )),
-                    Text('Low resistance = Like New',
+                    const Text('Low resistance = Like New',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppTheme.textSecondaryC(context),
+                          color: AppTheme.textSecondary,
                         )),
                   ],
                 ),
@@ -205,20 +191,20 @@ class BatteryHealthScreen extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: '${data.internalResistance.toInt()}',
-                      style: TextStyle(
+                      text: '${BatteryData.internalResistance.toInt()}',
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimaryC(context),
+                        color: AppTheme.textPrimary,
                         letterSpacing: -1,
                         height: 1,
                       ),
                     ),
-                    TextSpan(
-                      text: ' m\u03A9',
+                    const TextSpan(
+                      text: ' mΩ',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.textSecondaryC(context),
+                        color: AppTheme.textSecondary,
                       ),
                     ),
                   ],
@@ -227,10 +213,10 @@ class BatteryHealthScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Text('RESISTANCE TREND',
+          const Text('RESISTANCE TREND',
               style: TextStyle(
                 fontSize: 10,
-                color: AppTheme.textTertiaryC(context),
+                color: AppTheme.textTertiary,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.8,
               )),
@@ -243,7 +229,7 @@ class BatteryHealthScreen extends StatelessWidget {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (_) => FlLine(
-                    color: AppTheme.dividerC(context),
+                    color: AppTheme.divider,
                     strokeWidth: 1,
                   ),
                 ),
@@ -258,9 +244,9 @@ class BatteryHealthScreen extends StatelessWidget {
                         final labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Now'];
                         if (value.toInt() < labels.length) {
                           return Text(labels[value.toInt()],
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 9,
-                                color: AppTheme.textTertiaryC(context),
+                                color: AppTheme.textTertiary,
                               ));
                         }
                         return const Text('');
@@ -273,8 +259,8 @@ class BatteryHealthScreen extends StatelessWidget {
                       showTitles: true,
                       reservedSize: 28,
                       getTitlesWidget: (value, _) => Text('${value.toInt()}',
-                          style: TextStyle(
-                            fontSize: 9, color: AppTheme.textTertiaryC(context),
+                          style: const TextStyle(
+                            fontSize: 9, color: AppTheme.textTertiary,
                           )),
                       interval: 2,
                     ),
@@ -283,7 +269,7 @@ class BatteryHealthScreen extends StatelessWidget {
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: data.resistanceHistory.asMap().entries
+                    spots: BatteryData.resistanceHistory.asMap().entries
                         .map((e) => FlSpot(e.key.toDouble(), e.value))
                         .toList(),
                     isCurved: true,
@@ -294,7 +280,7 @@ class BatteryHealthScreen extends StatelessWidget {
                       show: true,
                       getDotPainter: (spot, _, __, index) =>
                           FlDotCirclePainter(
-                            radius: index == data.resistanceHistory.length - 1
+                            radius: index == BatteryData.resistanceHistory.length - 1
                                 ? 4 : 2,
                             color: AppTheme.primaryBlue,
                             strokeWidth: 0,
@@ -324,8 +310,8 @@ class BatteryHealthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCoulombicEfficiencyCard(BuildContext context, BatteryData data) {
-    final efficiency = data.coulombicEfficiency;
+  Widget _buildCoulombicEfficiencyCard() {
+    final efficiency = BatteryData.coulombicEfficiency;
     final isHealthy = efficiency >= 99.0;
     return AppCard(
       padding: const EdgeInsets.all(20),
@@ -335,23 +321,23 @@ class BatteryHealthScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Chemistry Integrity',
+                const Text('Chemistry Integrity',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimaryC(context),
+                      color: AppTheme.textPrimary,
                     )),
                 const SizedBox(height: 2),
-                Text('Coulombic Efficiency',
+                const Text('Coulombic Efficiency [#13]',
                     style: TextStyle(
                       fontSize: 11,
-                      color: AppTheme.textSecondaryC(context),
+                      color: AppTheme.textSecondary,
                     )),
                 const SizedBox(height: 12),
                 Text(
                   isHealthy
-                      ? 'Healthy cell chemistry'
-                      : 'Degradation detected — service soon',
+                      ? '✓ Healthy cell chemistry'
+                      : '⚠ Degradation detected — service soon',
                   style: TextStyle(
                     fontSize: 12,
                     color: isHealthy ? AppTheme.successGreen : AppTheme.warningAmber,
@@ -375,8 +361,8 @@ class BatteryHealthScreen extends StatelessWidget {
               ),
               Text(
                 isHealthy ? 'Optimal' : 'Check',
-                style: TextStyle(
-                  fontSize: 11, color: AppTheme.textTertiaryC(context),
+                style: const TextStyle(
+                  fontSize: 11, color: AppTheme.textTertiary,
                 ),
               ),
             ],
@@ -386,9 +372,9 @@ class BatteryHealthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLifespanSection(BuildContext context, BatteryData data) {
+  Widget _buildLifespanSection() {
     const totalLifeCycles = 1500;
-    final cycleProgress = data.cycleCount / totalLifeCycles;
+    final cycleProgress = BatteryData.cycleCount / totalLifeCycles;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -405,18 +391,18 @@ class BatteryHealthScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Cycle Count',
+                        const Text('Cycle Count',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimaryC(context),
+                              color: AppTheme.textPrimary,
                             )),
                         const SizedBox(height: 2),
                         Text(
-                          '${data.cycleCount} / $totalLifeCycles cycles used',
-                          style: TextStyle(
+                          '${BatteryData.cycleCount} / $totalLifeCycles cycles used',
+                          style: const TextStyle(
                             fontSize: 12,
-                            color: AppTheme.textSecondaryC(context),
+                            color: AppTheme.textSecondary,
                           ),
                         ),
                       ],
@@ -424,10 +410,10 @@ class BatteryHealthScreen extends StatelessWidget {
                   ),
                   Text(
                     '${(cycleProgress * 100).toInt()}%',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimaryC(context),
+                      color: AppTheme.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -445,10 +431,10 @@ class BatteryHealthScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                '~${(totalLifeCycles - data.cycleCount)} cycles remaining — est. ${((totalLifeCycles - data.cycleCount) / 250).toStringAsFixed(1)} years',
-                style: TextStyle(
+                '~${(totalLifeCycles - BatteryData.cycleCount)} cycles remaining — est. ${((totalLifeCycles - BatteryData.cycleCount) / 250).toStringAsFixed(1)} years',
+                style: const TextStyle(
                   fontSize: 12,
-                  color: AppTheme.textSecondaryC(context),
+                  color: AppTheme.textSecondary,
                 ),
               ),
             ],
@@ -458,8 +444,8 @@ class BatteryHealthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDodHistogramCard(BuildContext context, BatteryData data) {
-    final dodData = data.dodHistogram;
+  Widget _buildDodHistogramCard() {
+    final dodData = BatteryData.dodHistogram;
     final maxVal = dodData.reduce((a, b) => a > b ? a : b);
     final labels = ['0–20%', '20–40%', '40–60%', '60–80%', '80–100%'];
 
@@ -468,17 +454,17 @@ class BatteryHealthScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Depth of Discharge History',
+          const Text('Depth of Discharge History',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimaryC(context),
+                color: AppTheme.textPrimary,
               )),
           const SizedBox(height: 2),
-          Text('How deep you usually drain the pack',
+          const Text('How deep you usually drain the pack',
               style: TextStyle(
                 fontSize: 11,
-                color: AppTheme.textSecondaryC(context),
+                color: AppTheme.textSecondary,
               )),
           const SizedBox(height: 18),
           SizedBox(
@@ -489,7 +475,7 @@ class BatteryHealthScreen extends StatelessWidget {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (_) =>
-                      FlLine(color: AppTheme.dividerC(context), strokeWidth: 1),
+                      FlLine(color: AppTheme.divider, strokeWidth: 1),
                 ),
                 titlesData: FlTitlesData(
                   leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -503,9 +489,9 @@ class BatteryHealthScreen extends StatelessWidget {
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(labels[value.toInt()],
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 8,
-                                  color: AppTheme.textTertiaryC(context),
+                                  color: AppTheme.textTertiary,
                                 )),
                           );
                         }
@@ -516,6 +502,7 @@ class BatteryHealthScreen extends StatelessWidget {
                 ),
                 borderData: FlBorderData(show: false),
                 barGroups: dodData.asMap().entries.map((e) {
+                  // 60-80% bucket is highlighted (most common unhealthy range)
                   final isHighlighted = e.key == 3;
                   return BarChartGroupData(
                     x: e.key,
@@ -546,11 +533,11 @@ class BatteryHealthScreen extends StatelessWidget {
                   color: AppTheme.warningAmber.withOpacity(0.2)),
             ),
             child: Row(
-              children: [
-                const Icon(Icons.lightbulb_rounded,
+              children: const [
+                Icon(Icons.lightbulb_rounded,
                     color: AppTheme.warningAmber, size: 14),
-                const SizedBox(width: 8),
-                const Expanded(
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     'Tip: Try to charge before hitting 20% to improve battery life.',
                     style: TextStyle(
@@ -568,8 +555,8 @@ class BatteryHealthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCellBalanceCard(BuildContext context, BatteryData data) {
-    final imbalance = data.cellImbalance;
+  Widget _buildCellBalanceCard(BuildContext context) {
+    final imbalance = BatteryData.cellImbalance;
     final isBalanced = imbalance < 0.02;
 
     return Column(
@@ -588,17 +575,17 @@ class BatteryHealthScreen extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Cell Imbalance',
+                      const Text('Cell Imbalance',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimaryC(context),
+                            color: AppTheme.textPrimary,
                           )),
                       const SizedBox(height: 2),
                       Text(
-                        '${data.minCellVoltage}V min \u2194 ${data.maxCellVoltage}V max',
-                        style: TextStyle(
-                          fontSize: 11, color: AppTheme.textSecondaryC(context),
+                        '${BatteryData.minCellVoltage}V min ↔ ${BatteryData.maxCellVoltage}V max',
+                        style: const TextStyle(
+                          fontSize: 11, color: AppTheme.textSecondary,
                         ),
                       ),
                     ],
@@ -615,11 +602,12 @@ class BatteryHealthScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
+              // Voltage bar visualization
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   height: 20,
-                  color: AppTheme.dividerC(context),
+                  color: AppTheme.divider,
                   child: Row(
                     children: [
                       Container(
@@ -638,19 +626,19 @@ class BatteryHealthScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Min: ${data.minCellVoltage}V',
-                      style: TextStyle(
-                        fontSize: 11, color: AppTheme.textSecondaryC(context),
+                  Text('Min: ${BatteryData.minCellVoltage}V',
+                      style: const TextStyle(
+                        fontSize: 11, color: AppTheme.textSecondary,
                       )),
-                  Text('Max: ${data.maxCellVoltage}V',
-                      style: TextStyle(
-                        fontSize: 11, color: AppTheme.textSecondaryC(context),
+                  Text('Max: ${BatteryData.maxCellVoltage}V',
+                      style: const TextStyle(
+                        fontSize: 11, color: AppTheme.textSecondary,
                       )),
                 ],
               ),
               const SizedBox(height: 16),
               AppActionButton(
-                label: isBalanced ? 'Cells Balanced' : 'Perform Balancing Charge',
+                label: isBalanced ? 'Cells Balanced ✓' : 'Perform Balancing Charge',
                 icon: isBalanced
                     ? Icons.check_circle_rounded
                     : Icons.battery_charging_full_rounded,

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../theme/app_theme.dart';
 import '../models/battery_data.dart';
-import '../models/simulation_service.dart';
 import '../widgets/glass_widgets.dart';
 
 class EcoDriveScreen extends StatelessWidget {
@@ -12,75 +11,63 @@ class EcoDriveScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBg(context),
+      backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
-        child: ValueListenableBuilder<BatteryData>(
-          valueListenable: SimulationService.instance.data,
-          builder: (context, data, _) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                SimulationService.instance.refresh();
-                await Future.delayed(const Duration(milliseconds: 400));
-              },
-              color: AppTheme.primaryBlue,
-              child: CustomScrollView(
-                slivers: [
-                  _buildAppBar(context),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        const SizedBox(height: 8),
-                        _buildDailyScorecardCard(context, data),
-                        const SizedBox(height: 16),
-                        _buildDrivingStyleCard(context, data),
-                        const SizedBox(height: 16),
-                        _buildEfficiencyMetrics(context, data),
-                        const SizedBox(height: 16),
-                        _buildStressHistoryCard(context, data),
-                        const SizedBox(height: 16),
-                        _buildTripLog(context, data),
-                        const SizedBox(height: 24),
-                      ]),
-                    ),
-                  ),
-                ],
+        child: CustomScrollView(
+          slivers: [
+            _buildAppBar(),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const SizedBox(height: 8),
+                  _buildDailyScorecardCard(),
+                  const SizedBox(height: 16),
+                  _buildDrivingStyleCard(),
+                  const SizedBox(height: 16),
+                  _buildEfficiencyMetrics(),
+                  const SizedBox(height: 16),
+                  _buildStressHistoryCard(),
+                  const SizedBox(height: 16),
+                  _buildTripLog(),
+                  const SizedBox(height: 24),
+                ]),
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  SliverAppBar _buildAppBar(BuildContext context) {
+  SliverAppBar _buildAppBar() {
     return SliverAppBar(
       pinned: false,
       floating: true,
-      backgroundColor: AppTheme.scaffoldBg(context),
+      backgroundColor: AppTheme.backgroundLight,
       elevation: 0,
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: const [
           Text('Eco-Drive',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimaryC(context),
+                color: AppTheme.textPrimary,
                 letterSpacing: -0.8,
               )),
           Text('Performance & Gamification',
               style: TextStyle(
                 fontSize: 12,
-                color: AppTheme.textSecondaryC(context),
+                color: AppTheme.textSecondary,
               )),
         ],
       ),
     );
   }
 
-  Widget _buildDailyScorecardCard(BuildContext context, BatteryData data) {
-    final score = data.batteryStressIndex.toInt();
+  Widget _buildDailyScorecardCard() {
+    final score = BatteryData.batteryStressIndex.toInt();
     final grade = score > 85 ? 'A' : score > 70 ? 'B' : score > 55 ? 'C' : 'D';
     final gradeColor = score > 85
         ? AppTheme.successGreen
@@ -109,16 +96,14 @@ class EcoDriveScreen extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    AnimatedNumber(
-                      value: score.toDouble(),
-                      style: const TextStyle(
-                        fontSize: 64,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: -3,
-                        height: 1,
-                      ),
-                    ),
+                    Text('$score',
+                        style: const TextStyle(
+                          fontSize: 64,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: -3,
+                          height: 1,
+                        )),
                     const Padding(
                       padding: EdgeInsets.only(bottom: 10, left: 4),
                       child: Text('/100',
@@ -179,36 +164,39 @@ class EcoDriveScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDrivingStyleCard(BuildContext context, BatteryData data) {
+  Widget _buildDrivingStyleCard() {
+    // throttleGradient 0-1, brakePedalPos 0-1
+    // combined smoothness = inverse of aggressive behavior
     final smoothness =
-    ((1 - (data.throttleGradient + data.brakePedalPos) / 2) * 100).clamp(0, 100);
+    ((1 - (BatteryData.throttleGradient + BatteryData.brakePedalPos) / 2) * 100).clamp(0, 100);
 
     return AppCard(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Driving Style Analysis',
+          const Text('Driving Style Analysis',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimaryC(context),
+                color: AppTheme.textPrimary,
               )),
           const SizedBox(height: 2),
-          Text('Throttle & brake behavior this session',
+          const Text('Throttle & brake behavior this session',
               style: TextStyle(
                 fontSize: 11,
-                color: AppTheme.textSecondaryC(context),
+                color: AppTheme.textSecondary,
               )),
           const SizedBox(height: 20),
+          // Style slider visualization
           Row(
             children: [
-              const Column(
+              Column(
                 children: [
-                  Icon(Icons.waves_rounded,
+                  const Icon(Icons.waves_rounded,
                       color: AppTheme.successGreen, size: 18),
-                  SizedBox(height: 4),
-                  Text('Smooth',
+                  const SizedBox(height: 4),
+                  const Text('Smooth',
                       style: TextStyle(
                         fontSize: 10,
                         color: AppTheme.successGreen,
@@ -235,25 +223,23 @@ class EcoDriveScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
+                      // Indicator
                       LayoutBuilder(
                         builder: (context, constraints) {
                           final pos = (1 - smoothness / 100) * constraints.maxWidth;
                           return Stack(
                             children: [
                               Container(height: 16),
-                              AnimatedPositioned(
-                                duration: const Duration(milliseconds: 500),
-                                curve: Curves.easeOutCubic,
+                              Positioned(
                                 left: pos.clamp(0, constraints.maxWidth - 16),
                                 child: Container(
                                   width: 16,
                                   height: 16,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.textPrimaryC(context),
+                                    color: AppTheme.textPrimary,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: AppTheme.isDarkMode(context) ? Colors.black : Colors.white,
-                                      width: 2,
+                                      color: Colors.white, width: 2,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
@@ -272,12 +258,12 @@ class EcoDriveScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const Column(
+              Column(
                 children: [
-                  Icon(Icons.local_fire_department_rounded,
+                  const Icon(Icons.local_fire_department_rounded,
                       color: AppTheme.dangerRed, size: 18),
-                  SizedBox(height: 4),
-                  Text('Aggressive',
+                  const SizedBox(height: 4),
+                  const Text('Aggressive',
                       style: TextStyle(
                         fontSize: 10,
                         color: AppTheme.dangerRed,
@@ -290,17 +276,17 @@ class EcoDriveScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _buildStyleStat(context,
+              _buildStyleStat(
                   'Throttle Response',
-                  '${(data.throttleGradient * 100).toInt()}%',
+                  '${(BatteryData.throttleGradient * 100).toInt()}%',
                   Icons.speed_rounded),
               const SizedBox(width: 12),
-              _buildStyleStat(context,
+              _buildStyleStat(
                   'Brake Pressure',
-                  '${(data.brakePedalPos * 100).toInt()}%',
+                  '${(BatteryData.brakePedalPos * 100).toInt()}%',
                   Icons.album_rounded),
               const SizedBox(width: 12),
-              _buildStyleStat(context,
+              _buildStyleStat(
                   'Smoothness',
                   '${smoothness.toInt()}%',
                   Icons.waves_rounded),
@@ -311,30 +297,30 @@ class EcoDriveScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStyleStat(BuildContext context, String label, String value, IconData icon) {
+  Widget _buildStyleStat(String label, String value, IconData icon) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.scaffoldBg(context),
+          color: AppTheme.backgroundLight,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, color: AppTheme.textSecondaryC(context), size: 16),
+            Icon(icon, color: AppTheme.textSecondary, size: 16),
             const SizedBox(height: 6),
             Text(value,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimaryC(context),
+                  color: AppTheme.textPrimary,
                   letterSpacing: -0.5,
                 )),
             Text(label,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 9,
-                  color: AppTheme.textTertiaryC(context),
+                  color: AppTheme.textTertiary,
                   fontWeight: FontWeight.w500,
                 )),
           ],
@@ -343,7 +329,7 @@ class EcoDriveScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEfficiencyMetrics(BuildContext context, BatteryData data) {
+  Widget _buildEfficiencyMetrics() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -368,7 +354,7 @@ class EcoDriveScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '${data.regenEnergy} kWh',
+                      '${BatteryData.regenEnergy} kWh',
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -378,13 +364,13 @@ class EcoDriveScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text('Reclaimed Today',
+                    const Text('Reclaimed Today',
                         style: TextStyle(
-                          fontSize: 11, color: AppTheme.textTertiaryC(context),
+                          fontSize: 11, color: AppTheme.textTertiary,
                         )),
                     const SizedBox(height: 4),
                     Text(
-                      'Free Fuel!',
+                      '≈ Free Fuel! 🌱',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppTheme.regenGreen.withOpacity(0.7),
@@ -413,26 +399,26 @@ class EcoDriveScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '${data.energyConsumed} kWh',
-                      style: TextStyle(
+                      '${BatteryData.energyConsumed} kWh',
+                      style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimaryC(context),
+                        color: AppTheme.textPrimary,
                         letterSpacing: -1,
                         height: 1,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text('Energy Used',
+                    const Text('Energy Used',
                         style: TextStyle(
-                          fontSize: 11, color: AppTheme.textTertiaryC(context),
+                          fontSize: 11, color: AppTheme.textTertiary,
                         )),
                     const SizedBox(height: 4),
                     Text(
                       'Current trip total',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppTheme.textSecondaryC(context).withOpacity(0.7),
+                        color: AppTheme.textSecondary.withOpacity(0.7),
                       ),
                     ),
                   ],
@@ -445,23 +431,23 @@ class EcoDriveScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStressHistoryCard(BuildContext context, BatteryData data) {
+  Widget _buildStressHistoryCard() {
     return AppCard(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Battery Stress Trend',
+          const Text('Battery Stress Trend',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimaryC(context),
+                color: AppTheme.textPrimary,
               )),
           const SizedBox(height: 2),
-          Text('Last 9 sessions — lower is better',
+          const Text('Last 9 sessions — lower is better',
               style: TextStyle(
                 fontSize: 11,
-                color: AppTheme.textSecondaryC(context),
+                color: AppTheme.textSecondary,
               )),
           const SizedBox(height: 16),
           SizedBox(
@@ -472,18 +458,18 @@ class EcoDriveScreen extends StatelessWidget {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (_) =>
-                      FlLine(color: AppTheme.dividerC(context), strokeWidth: 1),
+                      FlLine(color: AppTheme.divider, strokeWidth: 1),
                 ),
-                titlesData: const FlTitlesData(
-                  leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                titlesData: FlTitlesData(
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: data.stressHistory.asMap().entries
+                    spots: BatteryData.stressHistory.asMap().entries
                         .map((e) => FlSpot(e.key.toDouble(), e.value))
                         .toList(),
                     isCurved: true,
@@ -504,7 +490,7 @@ class EcoDriveScreen extends StatelessWidget {
                     ),
                   ),
                 ],
-                minY: 30,
+                minY: 50,
                 maxY: 100,
               ),
             ),
@@ -514,7 +500,7 @@ class EcoDriveScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTripLog(BuildContext context, BatteryData data) {
+  Widget _buildTripLog() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -523,15 +509,15 @@ class EcoDriveScreen extends StatelessWidget {
           subtitle: 'Recent sessions with efficiency ratings',
         ),
         const SizedBox(height: 8),
-        ...data.recentTrips.map((trip) => Padding(
+        ...BatteryData.recentTrips.map((trip) => Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: _buildTripCard(context, trip),
+          child: _buildTripCard(trip),
         )),
       ],
     );
   }
 
-  Widget _buildTripCard(BuildContext context, TripData trip) {
+  Widget _buildTripCard(TripData trip) {
     final effColor = trip.efficiency < 140
         ? AppTheme.successGreen
         : trip.efficiency < 160
@@ -546,16 +532,16 @@ class EcoDriveScreen extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppTheme.scaffoldBg(context),
+              color: AppTheme.backgroundLight,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
               child: Text(
                 '${trip.score}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimaryC(context),
+                  color: AppTheme.textPrimary,
                 ),
               ),
             ),
@@ -566,15 +552,15 @@ class EcoDriveScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(trip.destination,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimaryC(context),
+                      color: AppTheme.textPrimary,
                     )),
                 const SizedBox(height: 2),
                 Text(trip.date,
-                    style: TextStyle(
-                      fontSize: 11, color: AppTheme.textSecondaryC(context),
+                    style: const TextStyle(
+                      fontSize: 11, color: AppTheme.textSecondary,
                     )),
               ],
             ),
@@ -583,10 +569,10 @@ class EcoDriveScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text('${trip.distance} km',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimaryC(context),
+                    color: AppTheme.textPrimary,
                   )),
               const SizedBox(height: 2),
               Container(

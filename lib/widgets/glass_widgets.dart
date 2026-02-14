@@ -189,7 +189,10 @@ class _CircularGaugeState extends State<CircularGauge>
                   style: TextStyle(
                     fontSize: widget.size * 0.22,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimaryC(context),
+
+                    // CHANGE MADE HERE ✔
+                    color: Colors.white,
+
                     letterSpacing: -1.5,
                     height: 1,
                   ),
@@ -393,7 +396,8 @@ class MetricTile extends StatelessWidget {
                   color: (iconColor ?? AppTheme.primaryBlue).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: iconColor ?? AppTheme.primaryBlue, size: 16),
+                child:
+                Icon(icon, color: iconColor ?? AppTheme.primaryBlue, size: 16),
               ),
               const Spacer(),
             ],
@@ -454,17 +458,23 @@ class SafetyIndicator extends StatelessWidget {
 
   Color get _color {
     switch (status) {
-      case SafetyStatus.safe: return AppTheme.successGreen;
-      case SafetyStatus.warning: return AppTheme.warningAmber;
-      case SafetyStatus.danger: return AppTheme.dangerRed;
+      case SafetyStatus.safe:
+        return AppTheme.successGreen;
+      case SafetyStatus.warning:
+        return AppTheme.warningAmber;
+      case SafetyStatus.danger:
+        return AppTheme.dangerRed;
     }
   }
 
   String get _statusLabel {
     switch (status) {
-      case SafetyStatus.safe: return 'SAFE';
-      case SafetyStatus.warning: return 'WARN';
-      case SafetyStatus.danger: return 'ALERT';
+      case SafetyStatus.safe:
+        return 'SAFE';
+      case SafetyStatus.warning:
+        return 'WARN';
+      case SafetyStatus.danger:
+        return 'ALERT';
     }
   }
 
@@ -498,7 +508,8 @@ class SafetyIndicator extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(value,
                     style: TextStyle(
-                      fontSize: 12, color: AppTheme.textSecondaryC(context),
+                      fontSize: 12,
+                      color: AppTheme.textSecondaryC(context),
                     )),
               ],
             ),
@@ -569,7 +580,9 @@ class _DriveModeSelectorState extends State<DriveModeSelector> {
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: isSelected
-                        ? (AppTheme.isDarkMode(context) ? Colors.black : Colors.white)
+                        ? (AppTheme.isDarkMode(context)
+                        ? Colors.black
+                        : Colors.white)
                         : AppTheme.textTertiaryC(context),
                   ),
                 ),
@@ -601,7 +614,8 @@ class AppActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color ?? (isPrimary ? AppTheme.primaryBlue : AppTheme.cardColor(context));
+    final bg =
+        color ?? (isPrimary ? AppTheme.primaryBlue : AppTheme.cardColor(context));
     final fg = isPrimary ? Colors.white : AppTheme.textPrimaryC(context);
 
     return GestureDetector(
@@ -686,7 +700,8 @@ class _SparklinePainter extends CustomPainter {
     final points = <Offset>[];
     for (int i = 0; i < data.length; i++) {
       final x = i / (data.length - 1) * size.width;
-      final y = size.height - ((data[i] - minVal) / range * (size.height - 8) + 4);
+      final y =
+          size.height - ((data[i] - minVal) / range * (size.height - 8) + 4);
       points.add(Offset(x, y));
     }
 
